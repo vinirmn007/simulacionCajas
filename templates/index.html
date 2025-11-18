@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulación Cajas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3>Simulacion</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/">
+                    
+                    <div class="alert alert-secondary">
+                        <h5>1. Diseño del Experimento (Variable 's') </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Mínimo de cajas:</label>
+                                <input type="number" name="min_cajas" class="form-control" value="1" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Máximo de cajas:</label>
+                                <input type="number" name="max_cajas" class="form-control" value="5" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h4>2. Datos de Tráfico</h4>
+                            <label>Tasa de Llegadas (&lambda; clientes/min):</label>
+                            <input type="number" step="0.1" name="lambda" class="form-control" value="2.0" required>
+                            
+                            <label class="mt-2">Tasa de Servicio (&mu; clientes/min/caja):</label>
+                            <input type="number" step="0.1" name="mu" class="form-control" value="1.5" required>
+                            
+                            <label class="mt-2">Número de Réplicas (R):</label>
+                            <input type="number" name="replicas" class="form-control" value="10" min="10" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <h4>3. Costos y SLA</h4>
+                            <label>Costo Operativo ($/min por caja):</label>
+                            <input type="number" step="0.01" name="c_caja" class="form-control" value="0.50" required>
+                            
+                            <label class="mt-2">Costo de Espera ($/min por cliente):</label>
+                            <input type="number" step="0.01" name="c_espera" class="form-control" value="0.10" required>
+                            
+                            <label class="mt-2">Penalización SLA ($/punto %):</label>
+                            <input type="number" step="0.1" name="c_sla" class="form-control" value="100" required>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Objetivo SLA (% mín requerido):</label>
+                            <input type="number" name="sla_target" class="form-control" value="80" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Tiempo máximo tolerable (min):</label>
+                            <input type="number" name="sla_time" class="form-control" value="8" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 mt-4 py-2">Ejecutar Simulación</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
