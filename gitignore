@@ -1,1 +1,51 @@
-.
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.so
+*.egg-info/
+*.egg
+
+# --- Entorno virtual ---
+venv/
+env/
+.venv/
+ENV/
+
+# --- Flask ---
+instance/
+*.db
+*.sqlite3
+*.sqlite
+
+# Archivos de configuración sensibles
+config.py
+*.env
+.env
+.env.*
+
+# --- Logs ---
+*.log
+logs/
+*.pid
+
+# --- Cache ---
+.cache/
+.pytest_cache/
+
+# --- Herramientas ---
+dist/
+build/
+*.spec
+
+# --- IDEs y editores ---
+.vscode/
+.idea/
+*.iml
+
+# --- Otros ---
+.DS_Store
+Thumbs.db
+
