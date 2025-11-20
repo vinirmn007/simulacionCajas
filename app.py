@@ -32,7 +32,7 @@ def run_simulation(env_params):
 def index():
     if request.method == 'POST':
         try:
-            min_cajas = int(request.form['min_cajas'])
+            min_cajas = 1
             max_cajas = int(request.form['max_cajas'])
             if min_cajas < 1: min_cajas = 1
             if max_cajas < min_cajas: max_cajas = min_cajas
