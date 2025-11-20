@@ -12,7 +12,9 @@ def run_simulation(env_params):
     
     reloj = 0.0
     cajas_libres_en = [0.0] * num_cajas 
-    tiempos_sistema = [] 
+    
+    # Ahora guardamos diccionarios para tener W y Wq
+    datos_clientes = [] 
     
     while reloj < tiempo_sim:
         t_entre_llegadas = random.expovariate(llegada_lambda)
@@ -21,12 +23,23 @@ def run_simulation(env_params):
 
         cajas_libres_en.sort() 
         tiempo_inicio_servicio = max(reloj, cajas_libres_en[0])
+        
         t_servicio = random.expovariate(servicio_mu)
         tiempo_salida = tiempo_inicio_servicio + t_servicio
         cajas_libres_en[0] = tiempo_salida
-        tiempos_sistema.append(tiempo_salida - reloj)
+        
+        # CÁLCULOS:
+        # Wq = Tiempo que esperó antes de ser atendido
+        tiempo_en_cola = tiempo_inicio_servicio - reloj
+        # W = Tiempo total (cola + servicio)
+        tiempo_en_sistema = tiempo_salida - reloj
+        
+        datos_clientes.append({
+            'wq': tiempo_en_cola,
+            'w': tiempo_en_sistema
+        })
 
-    return tiempos_sistema
+    return datos_clientes
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -50,20 +63,31 @@ def index():
             
             resultados_globales = []
 
-            #simulaciones
+            # simulaciones
             for s in range(min_cajas, max_cajas + 1): 
                 datos_replicas = []
                 for r in range(1, replicas + 1):
                     params = {'lambda': tasa_llegada, 'mu': tasa_servicio, 's': s, 'horizonte': tiempo_total_sim}
-                    tiempos = run_simulation(params)
                     
-                    if tiempos:
-                        avg_t = statistics.mean(tiempos)
-                        cumplen_sla = sum(1 for t in tiempos if t <= sla_time)
-                        pct_sla = (cumplen_sla / len(tiempos)) * 100
-                        total_clientes = len(tiempos)
+                    clientes_sim = run_simulation(params)
+                    
+                    if clientes_sim:
+                        # Extraer listas
+                        lista_w = [c['w'] for c in clientes_sim]
+                        lista_wq = [c['wq'] for c in clientes_sim]
+                        
+                        avg_t = statistics.mean(lista_w)
+                        avg_wq = statistics.mean(lista_wq)
+                        
+                        # Ley de Little: Lq = lambda * Wq
+                        avg_lq = tasa_llegada * avg_wq
+                        
+                        cumplen_sla = sum(1 for t in lista_w if t <= sla_time)
+                        pct_sla = (cumplen_sla / len(lista_w)) * 100
+                        total_clientes = len(lista_w)
                     else:
-                        avg_t = 0; pct_sla = 100; total_clientes = 0
+                        avg_t = 0; avg_wq = 0; avg_lq = 0
+                        pct_sla = 100; total_clientes = 0
 
                     costo_operativo = costo_caja * s * tiempo_total_sim
                     costo_esp_rep = costo_espera * (avg_t * total_clientes)
@@ -76,6 +100,8 @@ def index():
                     datos_replicas.append({
                         'n_replica': r,
                         'avg_t': avg_t,
+                        'avg_wq': avg_wq, # Nuevo
+                        'avg_lq': avg_lq, # Nuevo
                         'pct_sla': pct_sla,
                         'clientes': total_clientes,
                         'costo_op': costo_operativo,
@@ -84,10 +110,15 @@ def index():
                         'costo_total': ct_replica
                     })
 
-                #promedio
+                # promedios globales
                 mean_costo = statistics.mean([d['costo_total'] for d in datos_replicas])
                 mean_sla = statistics.mean([d['pct_sla'] for d in datos_replicas])
                 mean_tiempo = statistics.mean([d['avg_t'] for d in datos_replicas])
+                
+                # Promedios de cola
+                mean_wq = statistics.mean([d['avg_wq'] for d in datos_replicas])
+                mean_lq = statistics.mean([d['avg_lq'] for d in datos_replicas])
+                
                 mean_clientes = statistics.mean([d['clientes'] for d in datos_replicas])
                 mean_op = statistics.mean([d['costo_op'] for d in datos_replicas])
                 mean_esp = statistics.mean([d['costo_esp'] for d in datos_replicas])
@@ -101,6 +132,8 @@ def index():
                         'stdev_costo': round(stdev_costo, 2),
                         'mean_sla': round(mean_sla, 2),
                         'mean_tiempo': round(mean_tiempo, 2),
+                        'mean_wq': round(mean_wq, 2), # Nuevo
+                        'mean_lq': round(mean_lq, 1), # Nuevo
                         'mean_clientes': round(mean_clientes, 1),
                         'mean_op': round(mean_op, 2),
                         'mean_esp': round(mean_esp, 2),
@@ -110,7 +143,7 @@ def index():
                     'detalles': datos_replicas
                 })
 
-            #datos para graficos
+            # datos para graficos
             chart_data = None
             if resultados_globales:
                 min_cost = min(r['resumen']['mean_costo'] for r in resultados_globales)

@@ -14,6 +14,8 @@
         .best-row { border: 3px solid #198754; background-color: #d1e7dd !important; }
         summary { cursor: pointer; color: #0d6efd; font-weight: bold; text-decoration: underline; }
         .th-costos { background-color: #e2e3e5 !important; }
+        /* Nuevo estilo para metricas de cola */
+        .col-metricas { background-color: #e8f4f8 !important; }
         
         /* Estilos Gráficos */
         .chart-container { position: relative; height: 300px; width: 100%; margin-bottom: 20px; }
@@ -31,7 +33,6 @@
                 <p class="text-muted">Análisis detallado de costos y eficiencia operativa</p>
             </div>
             <div class="d-flex gap-2">
-                <!-- Botón ancla para bajar a los gráficos -->
                 <a href="#seccion-graficos" class="btn btn-primary">
                     <i class="bi bi-bar-chart-line"></i> Ver Gráficos ↓
                 </a>
@@ -49,6 +50,10 @@
                         <thead class="table-secondary">
                             <tr>
                                 <th rowspan="2" class="align-middle"># Cajas</th>
+                                
+                                <!-- SECCION NUEVA: METRICAS DE COLA -->
+                                <th colspan="2" class="col-metricas border-bottom-0 text-dark">Métricas de Cola</th>
+                                
                                 <th rowspan="2" class="align-middle">Clientes<br><small>(Prom)</small></th>
                                 <th rowspan="2" class="align-middle">% SLA</th>
                                 
@@ -58,6 +63,11 @@
                                 <th rowspan="2" class="align-middle">Detalle</th>
                             </tr>
                             <tr>
+                                <!-- Subencabezados Cola -->
+                                <th class="col-metricas text-muted"><small>Espera ($W_q$)<br>(min)</small></th>
+                                <th class="col-metricas text-dark fw-bold"><small>Largo ($L_q$)<br>(pers)</small></th>
+
+                                <!-- Subencabezados Costos -->
                                 <th class="th-costos text-muted"><small>Operativo<br>(Cajas)</small></th>
                                 <th class="th-costos text-muted"><small>Espera<br>(Clientes)</small></th>
                                 <th class="th-costos text-danger"><small>Multas<br>(SLA)</small></th>
@@ -67,6 +77,11 @@
                             {% for esc in resultados %}
                             <tr class="{{ 'best-row' if esc.es_mejor else '' }}">
                                 <td class="fs-4"><strong>{{ esc.cajas }}</strong></td>
+                                
+                                <!-- DATOS NUEVOS Wq y Lq -->
+                                <td class="text-muted">{{ esc.resumen.mean_wq }}</td>
+                                <td class="fw-bold text-dark fs-5">{{ esc.resumen.mean_lq }}</td>
+
                                 <td>{{ esc.resumen.mean_clientes }}</td>
                                 <td>
                                     {{ esc.resumen.mean_sla }}%
@@ -97,8 +112,11 @@
                                             <thead>
                                                 <tr class="text-center">
                                                     <th>#</th>
+                                                    <th>$L_q$</th> <!-- Nueva columna detalle -->
+                                                    <th>$W_q$</th> <!-- Nueva columna detalle -->
                                                     <th>Clientes</th>
-                                                    <th>% SLA</th> <th>C. Op.</th>
+                                                    <th>% SLA</th> 
+                                                    <th>C. Op.</th>
                                                     <th>C. Esp.</th>
                                                     <th>Multa</th>
                                                     <th>Total</th>
@@ -108,6 +126,11 @@
                                                 {% for run in esc.detalles %}
                                                 <tr>
                                                     <td class="text-center">{{ run.n_replica }}</td>
+                                                    
+                                                    <!-- DETALLE COLA -->
+                                                    <td class="text-center fw-bold">{{ run.avg_lq | round(1) }}</td>
+                                                    <td class="text-center text-muted">{{ run.avg_wq | round(2) }}</td>
+
                                                     <td class="text-center">{{ run.clientes }}</td>
                                                     <td class="{{ 'text-danger fw-bold' if run.costo_penal > 0 else 'text-success' }}">
                                                         {{ run.pct_sla | round(1) }}%
