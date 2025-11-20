@@ -45,10 +45,12 @@ def index():
             sla_target = float(request.form['sla_target'])  
             sla_time = float(request.form['sla_time'])      
             replicas = int(request.form.get('replicas', 10)) 
-            tiempo_total_sim = 480 
+            
+            tiempo_total_sim = 480 # tiempo en minutos (8 horas)
             
             resultados_globales = []
 
+            #simulaciones
             for s in range(min_cajas, max_cajas + 1): 
                 datos_replicas = []
                 for r in range(1, replicas + 1):
@@ -82,15 +84,14 @@ def index():
                         'costo_total': ct_replica
                     })
 
+                #promedio
                 mean_costo = statistics.mean([d['costo_total'] for d in datos_replicas])
                 mean_sla = statistics.mean([d['pct_sla'] for d in datos_replicas])
                 mean_tiempo = statistics.mean([d['avg_t'] for d in datos_replicas])
                 mean_clientes = statistics.mean([d['clientes'] for d in datos_replicas])
-                
                 mean_op = statistics.mean([d['costo_op'] for d in datos_replicas])
                 mean_esp = statistics.mean([d['costo_esp'] for d in datos_replicas])
                 mean_penal = statistics.mean([d['costo_penal'] for d in datos_replicas])
-                
                 stdev_costo = statistics.stdev([d['costo_total'] for d in datos_replicas]) if replicas > 1 else 0
 
                 resultados_globales.append({
@@ -109,15 +110,36 @@ def index():
                     'detalles': datos_replicas
                 })
 
+            #datos para graficos
+            chart_data = None
             if resultados_globales:
                 min_cost = min(r['resumen']['mean_costo'] for r in resultados_globales)
+                labels_s = []
+                data_costo = []
+                data_sla = []
+                data_util = []
+
                 for r in resultados_globales:
                     r['es_mejor'] = (r['resumen']['mean_costo'] == min_cost)
+                    labels_s.append(r['cajas'])
+                    data_costo.append(r['resumen']['mean_costo'])
+                    data_sla.append(r['resumen']['mean_sla'])
+                    rho = (tasa_llegada / (r['cajas'] * tasa_servicio)) * 100
+                    data_util.append(round(rho, 2))
 
-            return render_template('results.html', resultados=resultados_globales)
+                chart_data = {
+                    'labels': labels_s,
+                    'costos': data_costo,
+                    'slas': data_sla,
+                    'utilizacion': data_util,
+                    'sla_target': sla_target
+                }
+
+            return render_template('results.html', resultados=resultados_globales, chart_data=chart_data)
 
         except Exception as e:
-            return f"<h3 style='color:red'>Error: {e}</h3>"
+            return f"<h3 style='color:red'>Error en la simulación: {e}</h3>"
+
 
     return render_template('index.html')
 
